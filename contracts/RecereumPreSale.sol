@@ -15,7 +15,7 @@ contract RecereumPreSale is Ownable {
     uint256 public preSaleEndDate = 1515974400;
 
     // Hard cap (in tokens) for presale
-    uint256 public preSaleTokenCap = 480000;
+    uint256 public preSaleTokenCap = 480000 * (10**18);
 
     // Tokens sold on presale
     uint256 public preSaleTokenSold = 0;
@@ -36,6 +36,9 @@ contract RecereumPreSale is Ownable {
     // Token price (in weis)
     uint256 tokenPriceWei = 1 ether / uint256(300);
 
+    // Minimal ether required to buy tokens
+    uint256 minimalPurchaseWei = 1 ether;
+
     /* **************
      * Public methods
      */
@@ -49,10 +52,6 @@ contract RecereumPreSale is Ownable {
 
         require(_fundsWallet != 0x0);
         fundsWallet = _fundsWallet;
-
-        require(
-            token.allowance(owner, fundsWallet) >= preSaleTokenCap
-        );
     }
 
     function getTime() public returns (uint256) {
@@ -64,7 +63,7 @@ contract RecereumPreSale is Ownable {
     }
 
     function buyTokens(address recipient) public payable {
-        require(msg.value > 0);
+        require(msg.value >= minimalPurchaseWei);
         State state = getState();
         require(state == State.PreSale);
         require(preSaleTokenSold < preSaleTokenCap);
@@ -76,10 +75,11 @@ contract RecereumPreSale is Ownable {
             change = 0;
         } else {
             tokenAmount = preSaleTokenCap.sub(preSaleTokenSold);
-            weiAccepted = tokenAmount.mul(tokenPriceWei).div(token.decimals());
+            weiAccepted = tokenAmount.mul(tokenPriceWei).div(10**token.decimals());
             change = msg.value - weiAccepted;
         }
         preSaleTokenSold = preSaleTokenSold.add(tokenAmount);
+        fundsWallet.transfer(weiAccepted);
         token.transferFrom(owner, recipient, tokenAmount);
         if (change > 0) {
             msg.sender.transfer(change);
