@@ -1,9 +1,18 @@
-.PHONY: deps abi source build testrpc test
+.PHONY: deps abi bin source build testrpc test
 
 deps:
 	npm install
 
-source:
+abi:
+	solc zeppelin-solidity=$(shell pwd -P)/node_modules/zeppelin-solidity/ contracts/RecereumToken.sol --abi | grep ":RecereumToken " -A2 | tail -n1 > build/RecereumToken.abi
+	solc zeppelin-solidity=$(shell pwd -P)/node_modules/zeppelin-solidity/ contracts/RecereumPreSale.sol --abi | grep ":RecereumPreSale " -A2 | tail -n1 > build/RecereumPreSale.abi
+
+bin:
+	solc zeppelin-solidity=$(shell pwd -P)/node_modules/zeppelin-solidity/ contracts/RecereumToken.sol --bin | grep ":RecereumToken " -A2 | tail -n1 > build/RecereumToken.bin
+	solc zeppelin-solidity=$(shell pwd -P)/node_modules/zeppelin-solidity/ contracts/RecereumPreSale.sol --bin | grep ":RecereumPreSale " -A2 | tail -n1 > build/RecereumPreSale.bin
+
+
+merge:
 	if [ ! -e build ]; then mkdir build; fi; node_modules/sol-merger/bin/sol-merger.js "contracts/*.sol" var/build
 	cp var/build/*.sol build
 
