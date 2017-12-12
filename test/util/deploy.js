@@ -9,7 +9,10 @@ async function deployTestContracts(accounts) {
     let fundsWallet = accounts[1];
     let saleContract = await RecereumPreSaleMock.new(
         tokenContract.address,
-        fundsWallet
+        fundsWallet,
+        data.PRESALE_START_DATE,
+        data.PRESALE_END_DATE,
+        data.PRESALE_TOKEN_CAP
     );
     await tokenContract.approve(
         saleContract.address,

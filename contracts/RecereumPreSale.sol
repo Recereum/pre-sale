@@ -9,13 +9,13 @@ contract RecereumPreSale is Ownable {
     using SafeMath for uint256;
 
     // Start date of presale, >= 2018-01-01
-    uint256 public preSaleStartDate = 1514764800;
+    uint256 public preSaleStartDate = 0;
 
     // End date of presale, < 2018-01-15
-    uint256 public preSaleEndDate = 1515974400;
+    uint256 public preSaleEndDate = 0;
 
     // Hard cap (in tokens) for presale
-    uint256 public preSaleTokenCap = 480000 * (10**18);
+    uint256 public preSaleTokenCap = 0;
 
     // Tokens sold on presale
     uint256 public preSaleTokenSold = 0;
@@ -45,13 +45,25 @@ contract RecereumPreSale is Ownable {
 
     function RecereumPreSale(
         address _token,
-        address _fundsWallet
+        address _fundsWallet,
+        uint256 _preSaleStartDate,
+        uint256 _preSaleEndDate,
+        uint256 _preSaleTokenCap
     ) public {
         require(_token != 0x0);
         token = RecereumToken(_token);
 
         require(_fundsWallet != 0x0);
         fundsWallet = _fundsWallet;
+
+        require(_preSaleStartDate != 0);
+        preSaleStartDate = _preSaleStartDate;
+
+        require(_preSaleEndDate != 0);
+        preSaleEndDate = _preSaleEndDate;
+
+        require(_preSaleTokenCap != 0);
+        preSaleTokenCap = _preSaleTokenCap;
     }
 
     function getTime() public returns (uint256) {

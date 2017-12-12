@@ -8,10 +8,16 @@ contract RecereumPreSaleMock is RecereumPreSale {
 
     function RecereumPreSaleMock(
         address _token,
-        address _fundsWallet
+        address _fundsWallet,
+        uint256 _preSaleStartDate,
+        uint256 _preSaleEndDate,
+        uint256 _preSaleTokenCap
     )
         public
-        RecereumPreSale(_token, _fundsWallet)
+        RecereumPreSale(
+            _token, _fundsWallet, _preSaleStartDate,
+            _preSaleEndDate, _preSaleTokenCap
+        )
     {
         // emptiness
     }
