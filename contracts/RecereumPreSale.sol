@@ -34,7 +34,7 @@ contract RecereumPreSale is Ownable {
     RecereumToken public token = RecereumToken(0x0);
 
     // Token price (in weis)
-    uint256 tokenPriceWei = 1 ether / uint256(300);
+    uint256 tokenPriceWei = 1 ether / uint256(420);
 
     // Minimal ether required to buy tokens
     uint256 minimalPurchaseWei = 1 ether;
