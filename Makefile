@@ -1,4 +1,4 @@
-.PHONY: deps abi bin source build testrpc test
+.PHONY: deps abi bin merge build testrpc test
 
 deps:
 	npm install
