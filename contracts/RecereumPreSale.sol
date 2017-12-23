@@ -98,7 +98,7 @@ contract RecereumPreSale is Ownable {
         }
     }
 
-    function getState() public returns (State) {
+    function getState() public view returns (State) {
         uint256 _date = getTime();
         if (_date < preSaleStartDate) {
             return State.BeforePreSale;

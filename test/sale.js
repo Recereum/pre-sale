@@ -34,7 +34,7 @@ contract('Crowdsale [Basic Features]', function(accounts) {
         await saleContract.setTime(data.PRESALE_START_DATE);
         // initial balances
         let fundsBalance = await web3.eth.getBalance(fundsWallet);
-        let ethBalance = await web3.eth.getBalance(buyerWallet);
+        let buyerBalance = await web3.eth.getBalance(buyerWallet);
         let tokenBalance = await tokenContract.balanceOf.call(buyerWallet);
         // Spend minimal allowed ether
         let weiAmount = data.MINIMAL_PURCHASE_WEI.mul(1);
@@ -56,7 +56,7 @@ contract('Crowdsale [Basic Features]', function(accounts) {
         await saleContract.setTime(data.PRESALE_START_DATE);
         // initial balances
         let fundsBalance = await web3.eth.getBalance(fundsWallet);
-        let ethBalance = await web3.eth.getBalance(buyerWallet);
+        let buyerBalance = await web3.eth.getBalance(buyerWallet);
         let tokenBalance = await tokenContract.balanceOf.call(buyerWallet);
         // Spend minimal allowed ether
         let weiAmount = data.PRESALE_TOKEN_CAP.divToInt(10**data.DECIMALS)
@@ -74,7 +74,7 @@ contract('Crowdsale [Basic Features]', function(accounts) {
         fundsBalance.add(acceptedWei).should.be.bignumber.equal(
             await web3.eth.getBalance(fundsWallet)
         );
-        ethBalance.sub(acceptedWei).sub(etherUsed).should.be.bignumber.equal(
+        buyerBalance.sub(acceptedWei).sub(etherUsed).should.be.bignumber.equal(
             await web3.eth.getBalance(buyerWallet)
         );
     });
@@ -95,4 +95,84 @@ contract('Crowdsale [Basic Features]', function(accounts) {
             .should.be.rejectedWith(': revert');
     });
 
+    it('Buy token, then change date and fail to buy', async () => {
+        let buyerWallet = accounts[2];
+        await saleContract.setTime(data.PRESALE_START_DATE);
+        let weiAmount = data.MINIMAL_PURCHASE_WEI.mul(1);
+        await saleContract.sendTransaction({value: weiAmount, from: buyerWallet})
+
+        await saleContract.setTime(data.PRESALE_END_DATE);
+        await saleContract.sendTransaction({value: weiAmount, from: buyerWallet})
+            .should.be.rejectedWith(': revert');
+    });
+
+
+    it('Just another purchase test', async () => {
+        let tokenContract = await RecereumToken.new();
+        let fundsWallet = accounts[1];
+        let buyerWallet = accounts[2];
+        let tokenCap = 500 * (10**data.DECIMALS);
+        let saleContract = await RecereumPreSaleMock.new(
+            tokenContract.address,
+            fundsWallet,
+            data.PRESALE_START_DATE,
+            data.PRESALE_END_DATE,
+            tokenCap
+        );
+        await tokenContract.approve(
+            saleContract.address,
+            tokenCap,
+            {from: accounts[0]}
+        );
+        await saleContract.setTime(data.PRESALE_START_DATE);
+
+        // initial balances
+        let fundsBalance = await web3.eth.getBalance(fundsWallet);
+        let buyerBalance = await web3.eth.getBalance(buyerWallet);
+        let tokenBalance = await tokenContract.balanceOf.call(buyerWallet);
+        0..should.be.bignumber.equal(tokenBalance);
+
+        // Spend 1 ether, buy 420 tokens
+        let weiAmount = data.ETHER.mul(1)
+        let res = await saleContract.sendTransaction({value: weiAmount, from: buyerWallet});
+        // calculate expected values
+        let tokenAmount = weiAmount.divToInt(data.TOKEN_PRICE_WEI).mul(10**data.DECIMALS);
+        let etherUsed = etherUsedForTx(res);
+        // Do checks
+        tokenBalance.add(tokenAmount).should.be.bignumber.equal(
+            await tokenContract.balanceOf.call(buyerWallet)
+        );
+        fundsBalance.add(weiAmount).should.be.bignumber.equal(
+            await web3.eth.getBalance(fundsWallet)
+        );
+        buyerBalance.sub(weiAmount).sub(etherUsed).should.be.bignumber.equal(
+            await web3.eth.getBalance(buyerWallet)
+        );
+
+        // Spend 1 ether more, buy 80 tokens because of hard cap of 500 tokens
+        let res2 = await saleContract.sendTransaction({
+            value: data.ETHER.mul(1),
+            from: buyerWallet
+        });
+        // calculate expected values
+        let newTokenAmount = 80 * (10**data.DECIMALS);
+        let etherUsed2 = etherUsedForTx(res2);
+        let extraFundsAmount = data.TOKEN_PRICE_WEI.mul(80);
+        // Do checks
+        tokenBalance.add(tokenAmount).add(newTokenAmount).should.be.bignumber.equal(
+            await tokenContract.balanceOf.call(buyerWallet)
+        );
+        fundsBalance.add(weiAmount).add(extraFundsAmount).should.be.bignumber.equal(
+            await web3.eth.getBalance(fundsWallet)
+        );
+        buyerBalance.sub(weiAmount).sub(extraFundsAmount).sub(etherUsed).sub(etherUsed2).should.be.bignumber.equal(
+            await web3.eth.getBalance(buyerWallet)
+        );
+
+        // Spend 1 ether more, get exception
+        let res3 = await saleContract.sendTransaction({
+                value: data.ETHER.mul(1),
+                from: buyerWallet
+            }).should.be.rejectedWith(': revert');
+    });
 });
